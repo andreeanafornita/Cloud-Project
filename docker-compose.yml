@@ -1,0 +1,72 @@
+services:
+  c01:
+    build:
+      context: ./c01
+    container_name: c01-container
+    ports:
+      - "8080:8080"
+    depends_on:
+      - c02
+
+  c02:
+    build:
+      context: ./c02
+    container_name: c02-container
+    ports:
+      - "61616:61616"
+
+  c03:
+    build:
+      context: ./c03
+    container_name: c03-container
+    depends_on:
+      - c02
+      - c04
+      - c05
+
+  c04:
+    build:
+      context: ./c04
+    container_name: c04-container
+    ports:
+      - "11099:1099"
+
+  c05:
+    build:
+      context: ./c05-copy
+    container_name: c05-container-copy
+    ports:
+      - "12099:1099"
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: imagesdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/my.cnf:ro
+
+  c06:
+    build:
+      context: ./c06
+    container_name: c06-container
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_started
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: imagesdb
+      MYSQL_EXTRA_ARGS: "--defaults-file=/etc/mysql/my.cnf"
+    tty: true
+    stdin_open: true
+
+volumes:
+  mysql-data:
